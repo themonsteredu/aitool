@@ -27,5 +27,5 @@ module.exports=async function(req,res){
     const r=await fetch('https://texttospeech.googleapis.com/v1/text:synthesize',{method:'POST',headers:{Authorization:`Bearer ${token}`,'Content-Type':'application/json'},body:JSON.stringify({input:{text:text.trim()},voice:{languageCode:'ko-KR',name:voice},audioConfig:{audioEncoding:'MP3',speakingRate:rate}}),signal:AbortSignal.timeout(25000)});
     if(!r.ok)throw Error('tts');const data=await r.json();if(!data.audioContent)throw Error('audio');
     res.setHeader('Content-Type','audio/mpeg');return res.status(200).send(Buffer.from(data.audioContent,'base64'));
-  }catch{return res.status(502).json({error:'AI 목소리를 만들지 못했어요. 음성 서비스 연결을 확인해 주세요.'});}
+  }catch(e){ const reason = ['auth','tts','audio','config'].includes(e.message) ? e.message : 'config'; const messages={auth:'Google 인증에 실패했어요. 서비스 계정 설정을 확인해 주세요.',tts:'Google 음성 요청이 실패했어요. API 사용 설정과 결제 계정을 확인해 주세요.',config:'Google 음성 인증 정보의 형식을 확인해 주세요.',audio:'음성 데이터를 받지 못했어요. 다시 시도해 주세요.'}; return res.status(502).json({error:messages[reason]});}
 };
