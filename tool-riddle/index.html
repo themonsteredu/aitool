@@ -5,11 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="theme-color" content="#f8f8f3">
   <title>생활 도구 수수께끼 · MOAKIT</title>
-  <base href="/tool-riddle/">
-  <link rel="icon" href="./assets/quiz-robot.webp">
-  <link rel="preload" as="image" href="./assets/quiz-robot.webp">
-  <link rel="stylesheet" href="./style.css?v=2">
-  <script defer src="./app.js?v=2"></script>
+  <link rel="icon" href="/tool-riddle/assets/quiz-robot.webp">
+  <link rel="preload" as="image" href="/tool-riddle/assets/robot/head.webp" media="(prefers-reduced-motion: no-preference)">
+  <link rel="stylesheet" href="/tool-riddle/style.css?v=3">
+  <link rel="stylesheet" href="/tool-riddle/robot-motion.css?v=1">
+  <script defer src="/tool-riddle/app.js?v=3"></script>
 </head>
 <body class="stage-view">
   <svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
@@ -24,7 +24,7 @@
   </svg>
   <header class="topbar">
     <div class="shell top-inner">
-      <a class="home" href="../"><span class="wordmark">MOAKIT</span><span class="home-label">수업 도구</span></a>
+      <a class="home" href="/"><span class="wordmark">MOAKIT</span><span class="home-label">수업 도구</span></a>
       <div class="utility">
         <button id="open-voices" type="button" class="quiet" aria-haspopup="dialog" disabled><svg class="icon" aria-hidden="true"><use href="#i-voices"/></svg>목소리</button>
         <button id="open-cards" type="button" class="quiet" disabled><svg class="icon" aria-hidden="true"><use href="#i-cards"/></svg>그림 카드</button>
@@ -45,7 +45,25 @@
         <div class="orbit" aria-hidden="true"></div>
         <button id="toggle-stage" class="quiet stage-expand" type="button" aria-pressed="false" title="화면을 터치하면 진행 버튼이 나타나요."><svg class="icon" aria-hidden="true"><use href="#i-expand"/></svg><span id="stage-label">로봇만 보기</span></button>
         <div class="picture-stage" id="picture-stage">
-          <img id="robot-picture" src="./assets/quiz-robot.webp" width="1254" height="1254" alt="노란 물음표 카드를 든 힌트 로봇" fetchpriority="high">
+          <svg id="robot-picture" role="img" aria-label="노란 물음표 카드를 든 힌트 로봇" viewBox="-16 -15 1286 1286" data-pose="welcome">
+            <image class="robot-still" href="/tool-riddle/assets/quiz-robot.webp" width="1254" height="1254"/>
+            <!-- Each joint uses the coordinate system of the original robot photograph. -->
+            <g class="robot-puppet" aria-hidden="true">
+              <image href="/tool-riddle/assets/robot/body.webp" x="267" y="600" width="601" height="636"/>
+              <image class="robot-palm" href="/tool-riddle/assets/robot/palm.webp" x="25" y="680" width="348" height="232"/>
+              <g class="robot-head">
+                <image href="/tool-riddle/assets/robot/head.webp" x="121" y="46" width="820" height="674"/>
+                <image class="robot-eye eye-left" href="/tool-riddle/assets/robot/eye-left.webp" x="373" y="393" width="178" height="202"/>
+                <image class="robot-eye eye-right" href="/tool-riddle/assets/robot/eye-right.webp" x="648" y="345" width="164" height="200"/>
+                <g class="robot-happy-eyes" fill="none" stroke="#fbe8bb" stroke-width="17" stroke-linecap="round">
+                  <path d="M420 508Q456 455 504 492M690 456Q720 410 765 442"/>
+                </g>
+                <image class="robot-smile" href="/tool-riddle/assets/robot/smile.webp" x="552" y="515" width="120" height="62"/>
+                <path class="robot-open-mouth" fill="#fbe8bb" d="M570 541Q610 564 651 526C650 547 638 576 611 580 592 582 577 566 570 541Z"/>
+              </g>
+              <image class="robot-card" href="/tool-riddle/assets/robot/card.webp" x="808" y="235" width="429" height="579"/>
+            </g>
+          </svg>
         </div>
       </div>
       <div class="play-panel">
