@@ -1,0 +1,9 @@
+{
+  "defaultVoice": "bright",
+  "sample": "안녕! 내가 들려주는 힌트를 듣고, 어떤 도구인지 맞혀 봐!",
+  "voices": [
+    { "id": "bright", "label": "밝은 목소리", "name": "ko-KR-Neural2-B", "rate": 1.0, "devicePitch": 1.14 },
+    { "id": "calm", "label": "차분한 목소리", "name": "ko-KR-Neural2-C", "rate": 0.92, "devicePitch": 0.88 },
+    { "id": "classic", "label": "기존 목소리", "name": "ko-KR-Wavenet-A", "rate": 0.94, "devicePitch": 1.0 }
+  ]
+}

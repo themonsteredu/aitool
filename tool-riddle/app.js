@@ -3,6 +3,7 @@
   const $ = id => document.getElementById(id);
   const screen = $('screen');
   const audio = new Audio();
+  const stageButton = $('toggle-stage');
   const packs = new Map();
   const requests = new Map();
   let tools = [];
@@ -15,6 +16,13 @@
   let studentStep = 'intro';
   let draft = { answer: '', first: '', second: '' };
   let sound = readSetting('sound') !== false;
+  let voiceSettings;
+  let voice;
+  let captions = readSetting('captions') === true;
+  let audioUnavailable = false;
+  let projecting = false;
+  let nativeProjection = false;
+  let controlsTimer;
   let speechId = 0;
   let voiceTimer = 0;
   let utterance;
@@ -55,16 +63,17 @@
   function textLine(text, cls = 'sub') { screen.append(el('p', cls, text)); }
 
   function activeTool() { return order[index]; }
-  function apiUrl(tool, clip) {
-    const params = new URLSearchParams({ tool: tool.id });
-    if (clip) params.set('clip', clip);
+  function clipUrl(clip, profile, tool, ticket) {
+    const params = new URLSearchParams({ clip, voice: profile.id });
+    if (tool) params.set('tool', tool.id);
+    if (ticket) params.set('ticket', ticket);
     return '/api/tool-riddle?' + params;
   }
   function requestPack(tool) {
     if (!tool || packs.has(tool.id) || requests.has(tool.id)) return;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 20000);
-    const promise = fetch(apiUrl(tool), { signal: controller.signal })
+    const promise = fetch('/api/tool-riddle?' + new URLSearchParams({ tool: tool.id, format: 'lines' }), { signal: controller.signal })
       .then(response => response.ok ? response.json() : null)
       .then(pack => {
         if (pack?.source === 'ai' && Array.isArray(pack.hints) && pack.hints.length === 2 &&
@@ -102,27 +111,44 @@
     utterance = null;
     $('art-panel').classList.remove('speaking');
     $('audio-status').textContent = '';
+    $('voice-status').textContent = '';
+  }
+  function syncCaption() {
+    const forced = !sound || audioUnavailable;
+    const visible = forced || captions;
+    $('board').classList.toggle('show-caption', visible);
+    const toggle = $('toggle-caption');
+    if (toggle) {
+      toggle.disabled = forced;
+      toggle.textContent = forced ? '자막 켜짐' : (visible ? '자막 숨기기' : '자막 보기');
+      toggle.setAttribute('aria-pressed', String(visible));
+    }
   }
   function koreanVoice() {
     return window.speechSynthesis?.getVoices().find(v => /^ko(?:[-_]|$)/i.test(v.lang));
   }
-  function speak(text, src) {
+  function speak(text, src, profile = voice, preview = false) {
     stopAudio();
-    if (!sound) return;
+    if (!preview && !sound) return;
+    if (!preview) {
+      audioUnavailable = false;
+      syncCaption();
+    }
     const id = speechId;
     const current = () => id === speechId;
-    const status = $('audio-status');
+    const status = $(preview ? 'voice-status' : 'audio-status');
     const art = $('art-panel');
     function playing() {
       if (!current()) return;
       clearTimeout(voiceTimer);
-      status.textContent = '';
+      if (!usedDevice) status.textContent = preview ? '목소리 미리 듣는 중…' : '';
       art.classList.add('speaking');
     }
     function finished() {
       if (!current()) return;
       clearTimeout(voiceTimer);
       art.classList.remove('speaking');
+      if (preview) status.textContent = '';
     }
     let usedDevice = false;
     function useDevice() {
@@ -136,13 +162,21 @@
       function silent() {
         if (!current()) return;
         finished();
-        status.textContent = '지금은 소리를 재생할 수 없어요. 화면의 문장을 읽어 주세요.';
+        if (!preview && robotStep > 0 && robotStep < 3) {
+          audioUnavailable = true;
+          syncCaption();
+          status.textContent = '소리를 재생할 수 없어 자막을 켰어요.';
+        } else {
+          status.textContent = preview ? '미리 듣기를 재생할 수 없어요.' : '소리를 재생할 수 없어요.';
+        }
       }
       if (!speech || !window.SpeechSynthesisUtterance) return silent();
       utterance = new SpeechSynthesisUtterance(text);
       utterance.lang = 'ko-KR';
       if (voice) utterance.voice = voice;
-      utterance.rate = 0.93;
+      utterance.rate = profile.rate;
+      utterance.pitch = profile.devicePitch;
+      status.textContent = '기기의 한국어 목소리로 재생해요.';
       utterance.onstart = playing;
       utterance.onend = finished;
       utterance.onerror = silent;
@@ -157,22 +191,77 @@
     audio.onended = finished;
     audio.onerror = useDevice;
     audio.src = src;
-    voiceTimer = setTimeout(useDevice, 4700);
+    voiceTimer = setTimeout(useDevice, 8500);
     audio.play().catch(useDevice);
   }
   function currentLine() {
     if (mode !== 'robot' || !robotStep) return;
     const tool = activeTool();
     if (robotStep === 3) {
-      speak('정답은 ' + tool.name + '! 어떤 힌트를 듣고 알았나요?', apiUrl(tool, 'answer'));
+      speak('정답은 ' + tool.name + '! 어떤 힌트를 듣고 알았나요?', clipUrl('answer', voice, tool));
       return;
     }
     const line = robotStep - 1;
-    let src = apiUrl(tool, String(robotStep));
-    if (roundPack.source === 'ai') {
-      src = roundPack.audio?.[line] ? 'data:audio/mpeg;base64,' + roundPack.audio[line] : null;
-    }
+    const ticket = roundPack.tickets?.[line];
+    const playable = roundPack.source !== 'ai' || ticket;
+    const src = playable ? clipUrl(String(robotStep), voice, tool, ticket) : null;
     speak(roundPack.hints[line], src);
+  }
+  function openVoices() {
+    stopAudio();
+    const group = $('voice-options');
+    group.querySelectorAll('label').forEach(label => label.remove());
+    for (const profile of voiceSettings.voices) {
+      const label = el('label', 'voice-choice');
+      const input = el('input');
+      input.type = 'radio';
+      input.name = 'robot-voice';
+      input.value = profile.id;
+      input.checked = profile.id === voice.id;
+      input.addEventListener('change', stopAudio);
+      label.append(input, document.createTextNode(profile.label));
+      group.append(label);
+    }
+    $('voice-dialog').showModal();
+  }
+  function checkedVoice() {
+    return voiceSettings.voices.find(v => v.id === $('voice-options').querySelector(':checked').value);
+  }
+  function wakeControls() {
+    if (!projecting) return;
+    document.body.classList.remove('controls-idle');
+    clearTimeout(controlsTimer);
+    controlsTimer = setTimeout(() => {
+      if (!document.activeElement?.matches('button:focus-visible, input:focus-visible') &&
+          !document.querySelector('dialog[open]')) document.body.classList.add('controls-idle');
+    }, 2600);
+  }
+  function stageLabel() {
+    const label = projecting ? '기본 화면' : ($('board').dataset.scene === 'answer' ? '그림 크게 보기' : '로봇만 보기');
+    $('stage-label').textContent = label;
+    stageButton.setAttribute('aria-label', label);
+    stageButton.setAttribute('aria-pressed', String(projecting));
+  }
+  function leaveProjection() {
+    projecting = false;
+    clearTimeout(controlsTimer);
+    document.body.classList.remove('projecting', 'controls-idle');
+    stageLabel();
+    if (nativeProjection && document.fullscreenElement) document.exitFullscreen().catch(() => {});
+    nativeProjection = false;
+  }
+  function toggleProjection() {
+    if (projecting) { leaveProjection(); return; }
+    projecting = true;
+    document.body.classList.add('projecting');
+    stageLabel();
+    wakeControls();
+    if (document.fullscreenEnabled && !document.fullscreenElement) {
+      document.documentElement.requestFullscreen().then(() => {
+        if (projecting) nativeProjection = true;
+        else if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
+      }).catch(() => {});
+    }
   }
   function updateSound() {
     $('toggle-sound').setAttribute('aria-pressed', String(sound));
@@ -201,7 +290,9 @@
       requestPack(order[index + 1]);
     }
     robotStep = step;
+    audioUnavailable = false;
     render(true);
+    wakeControls();
     currentLine();
   }
   function nextRobot() {
@@ -218,30 +309,33 @@
   function renderRobot() {
     const tool = activeTool();
     const counter = '문제 ' + (index + 1) + ' / ' + order.length;
-    const replay = () => action('다시 듣기', () => {
-      if (!sound) { sound = true; saveSetting('sound', true); updateSound(); }
-      currentLine();
-    }, 'secondary');
     setPicture(robotStep === 3 ? tool : null);
     if (robotStep === 0) {
       heading(counter, '내가 고른 도구는 뭘까?');
-      textLine('힌트를 잘 듣고 책상 위에서 알맞은 그림 카드를 찾아봐요.');
       actions(action(sound ? '첫 힌트 듣기' : '첫 힌트 보기', () => robotAdvance(1)));
     } else if (robotStep < 3) {
       const n = robotStep;
-      const label = (n === 1 ? '첫 번째 힌트' : '두 번째 힌트') + ' · ' + counter;
-      heading(label, roundPack.hints[n - 1], 'hint-title');
+      heading((n === 1 ? '첫 힌트' : '둘째 힌트') + ' · ' + counter, roundPack.hints[n - 1], 'hint-title');
+      screen.querySelector('h2').id = 'hint-caption';
       if (n === 2) textLine('첫 힌트　' + roundPack.hints[0], 'previous');
-      actions(action(n === 1 ? '다음 힌트' : '정답 공개', () => robotAdvance(n + 1)), replay());
+      const toggle = action('자막 보기', () => {
+        captions = !captions;
+        saveSetting('captions', captions);
+        syncCaption();
+      }, 'secondary action-caption');
+      toggle.id = 'toggle-caption';
+      toggle.setAttribute('aria-controls', 'hint-caption');
+      const replay = action('다시 듣기', () => {
+        if (!sound) { sound = true; saveSetting('sound', true); updateSound(); }
+        currentLine();
+      }, 'secondary');
+      actions(action(n === 1 ? '다음 힌트' : '정답 공개', () => robotAdvance(n + 1)), replay, toggle);
     } else {
       heading('정답 · ' + counter, tool.name);
-      textLine('어떤 힌트를 듣고 이 도구인 줄 알았나요?');
       actions(action('이제 우리가 문제 내기', () => changeMode('student')),
         action(index + 1 < order.length ? '다음 로봇 문제' : '다시 섞어 풀기', nextRobot, 'secondary'));
     }
-    const source = roundPack ? (roundPack.source === 'ai' ? 'AI가 만든 힌트' : '준비된 힌트') + ' · ' : '';
-    $('lesson-note').textContent = robotStep === 3 ? '출제자가 바뀌어도 정답은 친구들이 고른 뒤에 열어요.' :
-      source + '선생님의 “하나, 둘, 셋!” 신호에 맞춰 카드를 집어요.';
+    $('lesson-note').textContent = '';
   }
 
   function studentAdvance(step) {
@@ -324,11 +418,22 @@
   }
   function render(moveFocus = false) {
     if (!tools.length) return;
+    const studentAnswer = mode === 'student' && studentStep === 'answer';
+    const answerWithPicture = studentAnswer && tools.some(tool => tool.name === draft.answer);
+    const stageView = mode === 'robot' || answerWithPicture;
+    if (!stageView && projecting) leaveProjection();
+    document.body.classList.toggle('stage-view', stageView);
+    const scene = (mode === 'robot' && robotStep === 3) || studentAnswer ? 'answer' : (mode === 'robot' && robotStep ? 'hint' : 'intro');
+    $('board').dataset.scene = scene;
     screen.replaceChildren();
     $('board').classList.toggle('editing', mode === 'student' && studentStep === 'edit');
     $('robot-mode').setAttribute('aria-pressed', String(mode === 'robot'));
     $('student-mode').setAttribute('aria-pressed', String(mode === 'student'));
     if (mode === 'robot') renderRobot(); else renderStudent();
+    if (stageView && scene === 'answer') screen.querySelector('.actions').append(stageButton);
+    else $('art-panel').append(stageButton);
+    stageLabel();
+    syncCaption();
     if (moveFocus) screen.querySelector('h2')?.focus({ preventScroll: true });
   }
   function changeMode(next) {
@@ -386,9 +491,39 @@
     saveSetting('sound', sound);
     updateSound();
     if (!sound) stopAudio();
+    syncCaption();
     if (mode === 'robot' && tools.length && robotStep === 0) render();
     if (sound) currentLine();
   };
+  $('open-voices').onclick = openVoices;
+  $('close-voices').onclick = () => $('voice-dialog').close();
+  $('voice-dialog').addEventListener('close', () => {
+    if ($('voice-dialog').returnValue !== 'applied') stopAudio();
+    $('voice-dialog').returnValue = '';
+  });
+  $('preview-voice').onclick = () => {
+    const choice = checkedVoice();
+    speak(voiceSettings.sample, clipUrl('sample', choice), choice, true);
+  };
+  $('apply-voice').onclick = () => {
+    stopAudio();
+    voice = checkedVoice();
+    saveSetting('voice', voice.id);
+    $('voice-dialog').close('applied');
+    if (sound) currentLine();
+  };
+  stageButton.onclick = toggleProjection;
+  document.addEventListener('pointermove', wakeControls, { passive: true });
+  document.addEventListener('pointerdown', wakeControls, { passive: true });
+  document.addEventListener('focusin', wakeControls);
+  document.addEventListener('keydown', event => {
+    if (!projecting) return;
+    if (event.key === 'Escape') leaveProjection();
+    else wakeControls();
+  });
+  document.addEventListener('fullscreenchange', () => {
+    if (nativeProjection && !document.fullscreenElement) leaveProjection();
+  });
   $('open-cards').onclick = openCards;
   $('close-cards').onclick = () => $('card-dialog').close();
   $('card-grid').onchange = refreshChoices;
@@ -416,9 +551,17 @@
 
   async function initialize() {
     try {
-      const response = await fetch('./tools.json');
-      if (!response.ok) throw Error('catalog');
-      tools = await response.json();
+      const [catalog, settings] = await Promise.all(['./tools.json', './voices.json'].map(async path => {
+        const response = await fetch(path);
+        if (!response.ok) throw Error('catalog');
+        return response.json();
+      }));
+      tools = catalog;
+      voiceSettings = settings;
+      const savedVoice = readSetting('voice');
+      voice = settings.voices.find(v => v.id === savedVoice) ||
+        settings.voices.find(v => v.id === settings.defaultVoice);
+      $('open-voices').disabled = false;
       const saved = readSetting('cards');
       selected = tools.filter(t => Array.isArray(saved) && saved.includes(t.id)).map(t => t.id);
       if (!selected.length) selected = tools.map(t => t.id);
@@ -426,6 +569,7 @@
       $('open-cards').disabled = false;
       render();
     } catch {
+      document.body.classList.remove('stage-view');
       screen.replaceChildren();
       heading('연결 확인', '그림 카드를 불러오지 못했어요.', 'student-title');
       actions(action('다시 불러오기', initialize));
