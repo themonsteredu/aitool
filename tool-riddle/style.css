@@ -33,9 +33,7 @@ h1{font-size:clamp(31px,3.3vw,50px);line-height:1.23;letter-spacing:-.065em}
 .art-panel:after{top:48%;left:32%;width:114%;height:110%;border-width:24px;border-color:#ffffff29}
 .orbit{width:130%;height:140%;left:-76%;top:-56%;border-color:#ffffff4d}
 .picture-stage{width:100%;height:100%;min-height:0;display:grid;place-items:center;position:relative}
-#robot-picture{position:absolute;width:83%;height:85%;object-fit:contain;filter:drop-shadow(0 14px 9px #355e4926)}
-.art-panel.speaking #robot-picture{animation:talk .65s ease-in-out infinite alternate}
-@keyframes talk{from{transform:translateY(0) rotate(-.6deg)}to{transform:translateY(-4px) rotate(.6deg)}}
+#robot-picture{position:absolute;width:83%;height:85%;object-fit:contain}
 .answer-picture{width:77%;max-width:355px;aspect-ratio:1;object-fit:contain;border-radius:22px;box-shadow:0 14px 30px #264b3a1a}
 .art-panel.revealed{background:radial-gradient(ellipse at 48% 34%,#fff5cf,#f2dc9a)}
 .play-panel{display:flex;flex-direction:column;justify-content:center;padding:clamp(24px,4.1vw,66px);min-width:0}
@@ -83,7 +81,6 @@ dialog>p{color:var(--muted);margin:6px 0 16px}
 @media(max-width:930px){.shell{width:calc(100% - 44px)}.switcher button{padding:9px 11px}.play-panel{padding:26px}.board{grid-template-columns:.72fr 1fr}.masthead{gap:11px}}
 @media(max-width:740px){.shell{width:calc(100% - 32px)}.top-inner{min-height:55px}.quiet{padding:6px 8px}.home{gap:8px}.home-label{padding-left:8px}.masthead{margin:21px 0 15px;align-items:flex-start;flex-direction:column;gap:14px}.switcher{width:100%;padding:4px}.switcher button{flex:1;min-height:44px;font-size:15px;padding:7px}.board{grid-template-columns:1fr;min-height:0;border-radius:21px}.art-panel{height:clamp(145px,23dvh,215px);border-right:0;border-bottom:1px solid var(--line)}#robot-picture{height:94%;width:90%}.play-panel{padding:24px 21px 26px}.answer-picture{width:auto;height:85%;max-width:85%;border-radius:12px}.kicker{margin-bottom:9px}.actions{margin-top:20px}.board.editing .art-panel{display:none}.sub{margin-top:9px}.lesson-note{margin:13px 0 20px}.answer-picture{background:white}}
 @media(max-width:410px){.home-label{display:none}.utility{gap:1px}.quiet{font-size:14px}.actions{gap:7px}.primary,.secondary{padding:10px 13px;min-height:48px}.switcher button{gap:5px}}
-@media(prefers-reduced-motion:reduce){.art-panel.speaking #robot-picture{animation:none}}
 .sr-only,
 .stage-view .board[data-scene="intro"] #screen h2,
 .stage-view .board[data-scene="hint"]:not(.show-caption) #hint-caption {
@@ -122,7 +119,6 @@ dialog>p{color:var(--muted);margin:6px 0 16px}
     max-width:100%;max-height:100%;aspect-ratio:auto;object-fit:contain;object-position:50% 50%;
     border-radius:0;box-shadow:none;background:transparent;
   }
-  .stage-view #robot-picture {filter:drop-shadow(0 5px 4px #23483b17)}
   #robot-picture[hidden] {display:none!important}
   .stage-view .stage-expand {
     display:flex;position:absolute;z-index:2;top:10px;right:10px;min-height:42px;

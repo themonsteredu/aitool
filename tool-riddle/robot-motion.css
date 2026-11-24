@@ -1,0 +1,134 @@
+/* Joint origins are in the coordinate system of the original robot photograph. */
+.robot-puppet, .robot-open-mouth, .robot-happy-eyes { display: none }
+#robot-picture { overflow: visible; pointer-events: none }
+#robot-picture[hidden] { display: none }
+
+@media screen and (prefers-reduced-motion: no-preference) {
+  .robot-still { display: none }
+  .robot-puppet, .robot-open-mouth { display: inline }
+  .robot-open-mouth { opacity: 0; transform-origin: 612px 540px }
+  .robot-smile { transform-origin: 612px 539px }
+  .robot-eye.eye-left { transform-origin: 463px 496px }
+  .robot-eye.eye-right { transform-origin: 730px 447px }
+  .robot-head { transform-origin: 565px 692px }
+  .robot-palm { transform-origin: 346px 787px }
+  .robot-card { transform-origin: 817px 745px }
+
+  .robot-eye { animation: robot-blink 5.6s linear -.65s infinite }
+  .robot-head { animation: robot-attend 6.4s ease-in-out infinite }
+  [data-pose="welcome"] .robot-palm { animation: robot-wave 8s ease-in-out infinite }
+  [data-pose="welcome"] .robot-head { animation: robot-greet 8s ease-in-out infinite }
+  [data-pose="thinking"] .robot-card { animation: robot-offer-card 5.8s ease-in-out infinite }
+  [data-pose="thinking"] .robot-head { animation: robot-listen 5.8s ease-in-out infinite }
+  [data-pose="thinking"] .robot-palm { animation: robot-invite 5.8s ease-in-out infinite }
+
+  .speaking #robot-picture .robot-head { animation: robot-nod 1.48s ease-in-out infinite }
+  .speaking #robot-picture .robot-card { animation: robot-emphasize 1.48s ease-in-out infinite }
+  .speaking #robot-picture .robot-palm { animation: robot-explain 2.25s ease-in-out infinite }
+  .speaking #robot-picture .robot-smile { animation: robot-syllables .78s ease-in-out infinite }
+  .speaking #robot-picture .robot-open-mouth { animation: robot-vowels .78s ease-in-out infinite }
+
+  .art-panel.cheering #robot-picture[hidden] { display: block !important; z-index: 1; animation: robot-exit .84s ease-out both }
+  .art-panel.cheering .answer-picture { animation: robot-reveal .84s ease-out both }
+  .art-panel.cheering #robot-picture .robot-head { animation: robot-cheer-head .7s ease-in-out both }
+  .art-panel.cheering #robot-picture .robot-palm { animation: robot-cheer-palm .7s ease-out both }
+  .art-panel.cheering #robot-picture .robot-card { animation: robot-cheer-card .7s ease-out both }
+  .art-panel.cheering #robot-picture .robot-eye { animation: robot-cheer-eyes .7s ease-in-out both }
+  .art-panel.cheering #robot-picture .robot-happy-eyes { display: inline; animation: robot-beam .7s ease-in-out both }
+  .art-panel.cheering #robot-picture .robot-smile { animation: none }
+  .art-panel.cheering #robot-picture .robot-open-mouth { animation: none; opacity: 1 }
+}
+
+@keyframes robot-wave {
+  0%, 43%, 100% { transform: rotate(0) }
+  9%, 25% { transform: rotate(23deg) }
+  17%, 34% { transform: rotate(8deg) }
+}
+@keyframes robot-greet {
+  0%, 45%, 100% { transform: rotate(0) }
+  14% { transform: rotate(-4deg) translateY(-4px) }
+  29% { transform: rotate(1.6deg) }
+  72% { transform: rotate(.8deg) }
+}
+@keyframes robot-blink {
+  0%, 37%, 41.5%, 100% { transform: scaleY(1) }
+  39% { transform: scaleY(.065) }
+}
+@keyframes robot-attend {
+  0%, 65%, 100% { transform: rotate(0) }
+  32% { transform: rotate(2.5deg) translateY(-4px) }
+}
+@keyframes robot-listen {
+  0%, 80%, 100% { transform: rotate(0) }
+  27%, 46% { transform: rotate(5deg) translateY(2px) }
+  66% { transform: rotate(-.8deg) }
+}
+@keyframes robot-offer-card {
+  0%, 75%, 100% { transform: rotate(0) }
+  24% { transform: rotate(-6.5deg) }
+  35% { transform: rotate(-2.5deg) }
+  46% { transform: rotate(-5deg) }
+}
+@keyframes robot-invite {
+  0%, 76%, 100% { transform: rotate(0) }
+  28%, 43% { transform: rotate(6deg) }
+}
+@keyframes robot-nod {
+  0%, 100% { transform: rotate(-1deg) }
+  28% { transform: translateY(9px) rotate(2.6deg) }
+  62% { transform: translateY(-3px) rotate(-1.6deg) }
+}
+@keyframes robot-emphasize {
+  0%, 100% { transform: rotate(-1deg) }
+  38% { transform: rotate(-6deg) }
+  72% { transform: rotate(-2.5deg) }
+}
+@keyframes robot-explain {
+  0%, 100% { transform: rotate(1deg) }
+  40% { transform: rotate(10deg) }
+  75% { transform: rotate(4deg) }
+}
+@keyframes robot-syllables {
+  0%, 32%, 62%, 100% { transform: scale(1) }
+  15%, 80% { transform: scale(.79, 1.18) }
+  48% { transform: scale(.93, 1.1) }
+}
+@keyframes robot-vowels {
+  0%, 32%, 62%, 100% { opacity: 0; transform: scale(.9, .35) }
+  15% { opacity: 1; transform: scale(.82, 1.2) }
+  48% { opacity: .9; transform: scale(.93, .86) }
+  80% { opacity: 1; transform: scale(.78, 1.12) }
+}
+@keyframes robot-cheer-head {
+  0%, 100% { transform: rotate(0) }
+  25% { transform: translateY(6px) rotate(3deg) }
+  62% { transform: translateY(-8px) rotate(-4deg) }
+}
+@keyframes robot-cheer-palm {
+  0% { transform: rotate(0) }
+  40% { transform: rotate(28deg) }
+  68% { transform: rotate(18deg) }
+  100% { transform: rotate(24deg) }
+}
+@keyframes robot-cheer-card {
+  0% { transform: rotate(0) }
+  42% { transform: rotate(-11deg) }
+  72% { transform: rotate(-5deg) }
+  100% { transform: rotate(-9deg) }
+}
+@keyframes robot-cheer-eyes {
+  0%, 100% { opacity: 1; transform: scaleY(1) }
+  30%, 66% { opacity: 0; transform: scaleY(.08) }
+}
+@keyframes robot-beam {
+  0%, 12%, 100% { opacity: 0 }
+  31%, 68% { opacity: 1 }
+}
+@keyframes robot-exit {
+  0%, 57% { opacity: 1 }
+  86%, 100% { opacity: 0 }
+}
+@keyframes robot-reveal {
+  0%, 54% { opacity: 0 }
+  100% { opacity: 1 }
+}

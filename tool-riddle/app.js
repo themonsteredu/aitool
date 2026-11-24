@@ -4,6 +4,10 @@
   const screen = $('screen');
   const audio = new Audio();
   const stageButton = $('toggle-stage');
+  const robotPicture = $('robot-picture');
+  const artPanel = $('art-panel');
+  const motionAllowed = window.matchMedia('(prefers-reduced-motion: no-preference)');
+  const upcomingPicture = new Image();
   const packs = new Map();
   const requests = new Map();
   let tools = [];
@@ -63,6 +67,7 @@
   function textLine(text, cls = 'sub') { screen.append(el('p', cls, text)); }
 
   function activeTool() { return order[index]; }
+  function pictureUrl(tool) { return '/tool-riddle/assets/' + tool.id + '.webp'; }
   function clipUrl(clip, profile, tool, ticket) {
     const params = new URLSearchParams({ clip, voice: profile.id });
     if (tool) params.set('tool', tool.id);
@@ -104,12 +109,12 @@
   function stopAudio() {
     speechId++;
     clearTimeout(voiceTimer);
-    audio.onplaying = audio.onended = audio.onerror = null;
+    audio.onplaying = audio.onended = audio.onerror = audio.onwaiting = audio.onpause = null;
     audio.pause();
     if (audio.hasAttribute('src')) { audio.removeAttribute('src'); audio.load(); }
     window.speechSynthesis?.cancel();
     utterance = null;
-    $('art-panel').classList.remove('speaking');
+    artPanel.classList.remove('speaking');
     $('audio-status').textContent = '';
     $('voice-status').textContent = '';
   }
@@ -137,17 +142,19 @@
     const id = speechId;
     const current = () => id === speechId;
     const status = $(preview ? 'voice-status' : 'audio-status');
-    const art = $('art-panel');
     function playing() {
       if (!current()) return;
       clearTimeout(voiceTimer);
       if (!usedDevice) status.textContent = preview ? '목소리 미리 듣는 중…' : '';
-      art.classList.add('speaking');
+      artPanel.classList.add('speaking');
+    }
+    function pauseGesture() {
+      if (current()) artPanel.classList.remove('speaking');
     }
     function finished() {
       if (!current()) return;
       clearTimeout(voiceTimer);
-      art.classList.remove('speaking');
+      pauseGesture();
       if (preview) status.textContent = '';
     }
     let usedDevice = false;
@@ -155,8 +162,9 @@
       if (!current() || usedDevice) return;
       usedDevice = true;
       clearTimeout(voiceTimer);
-      audio.onplaying = audio.onended = audio.onerror = null;
+      audio.onplaying = audio.onended = audio.onerror = audio.onwaiting = audio.onpause = null;
       audio.pause();
+      pauseGesture();
       const speech = window.speechSynthesis;
       const voice = koreanVoice();
       function silent() {
@@ -178,6 +186,8 @@
       utterance.pitch = profile.devicePitch;
       status.textContent = '기기의 한국어 목소리로 재생해요.';
       utterance.onstart = playing;
+      utterance.onresume = playing;
+      utterance.onpause = pauseGesture;
       utterance.onend = finished;
       utterance.onerror = silent;
       try {
@@ -188,6 +198,7 @@
     if (!src) return useDevice();
     status.textContent = '로봇 목소리를 준비하고 있어요.';
     audio.onplaying = playing;
+    audio.onwaiting = audio.onpause = pauseGesture;
     audio.onended = finished;
     audio.onerror = useDevice;
     audio.src = src;
@@ -271,27 +282,40 @@
   function setPicture(tool) {
     const stage = $('picture-stage');
     const old = stage.querySelector('.answer-picture');
-    $('robot-picture').hidden = Boolean(tool);
-    $('art-panel').classList.toggle('revealed', Boolean(tool));
+    artPanel.classList.remove('cheering');
+    artPanel.classList.toggle('revealed', Boolean(tool));
+    robotPicture.toggleAttribute('hidden', Boolean(tool));
+    robotPicture.setAttribute('aria-hidden', String(Boolean(tool)));
     if (!tool) { old?.remove(); return; }
     if (old?.dataset.id === tool.id) return;
     old?.remove();
     const img = new Image();
-    img.src = './assets/' + tool.id + '.webp';
+    img.src = pictureUrl(tool);
     img.alt = tool.name;
     img.className = 'answer-picture';
     img.dataset.id = tool.id;
     stage.append(img);
   }
+  function cheerForAnswer() {
+    if (artPanel.classList.contains('revealed') && motionAllowed.matches && !document.hidden) {
+      artPanel.classList.add('cheering');
+    }
+  }
+  robotPicture.addEventListener('animationend', event => {
+    if (event.target === robotPicture && event.animationName === 'robot-exit') artPanel.classList.remove('cheering');
+  });
+  motionAllowed.addEventListener?.('change', () => artPanel.classList.remove('cheering'));
   function robotAdvance(step) {
     if (step === 1) {
       const tool = activeTool();
+      upcomingPicture.src = pictureUrl(tool);
       roundPack = packs.get(tool.id) || { source: 'classroom', hints: tool.hints };
       requestPack(order[index + 1]);
     }
     robotStep = step;
     audioUnavailable = false;
     render(true);
+    if (step === 3) cheerForAnswer();
     wakeControls();
     currentLine();
   }
@@ -341,6 +365,7 @@
   function studentAdvance(step) {
     studentStep = step;
     render(true);
+    if (step === 'answer') cheerForAnswer();
   }
   function newStudent() {
     draft = { answer: '', first: '', second: '' };
@@ -425,6 +450,7 @@
     document.body.classList.toggle('stage-view', stageView);
     const scene = (mode === 'robot' && robotStep === 3) || studentAnswer ? 'answer' : (mode === 'robot' && robotStep ? 'hint' : 'intro');
     $('board').dataset.scene = scene;
+    robotPicture.dataset.pose = mode === 'student' ? 'attentive' : (scene === 'intro' ? 'welcome' : 'thinking');
     screen.replaceChildren();
     $('board').classList.toggle('editing', mode === 'student' && studentStep === 'edit');
     $('robot-mode').setAttribute('aria-pressed', String(mode === 'robot'));
@@ -462,7 +488,7 @@
       check.value = tool.id;
       check.checked = selected.includes(tool.id);
       const img = new Image();
-      img.src = './assets/' + tool.id + '.webp';
+      img.src = pictureUrl(tool);
       img.alt = '';
       label.append(check, img, el('span', '', tool.name));
       grid.append(label);
@@ -477,7 +503,7 @@
     for (const tool of tools.filter(t => ids.includes(t.id))) {
       const figure = el('figure', 'print-card');
       const img = new Image();
-      img.src = './assets/' + tool.id + '.webp';
+      img.src = pictureUrl(tool);
       img.alt = '';
       figure.append(img, el('strong', '', tool.name));
       sheet.append(figure);
@@ -544,14 +570,19 @@
     window.print();
   };
   window.addEventListener('beforeprint', fillPrintSheet);
-  document.addEventListener('visibilitychange', () => { if (document.hidden) stopAudio(); });
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAudio();
+      artPanel.classList.remove('cheering');
+    }
+  });
   window.addEventListener('pagehide', stopAudio);
   updateSound();
   window.speechSynthesis?.getVoices();
 
   async function initialize() {
     try {
-      const [catalog, settings] = await Promise.all(['./tools.json', './voices.json'].map(async path => {
+      const [catalog, settings] = await Promise.all(['/tool-riddle/tools.json', '/tool-riddle/voices.json'].map(async path => {
         const response = await fetch(path);
         if (!response.ok) throw Error('catalog');
         return response.json();
