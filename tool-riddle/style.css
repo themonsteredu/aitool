@@ -84,6 +84,126 @@ dialog>p{color:var(--muted);margin:6px 0 16px}
 @media(max-width:740px){.shell{width:calc(100% - 32px)}.top-inner{min-height:55px}.quiet{padding:6px 8px}.home{gap:8px}.home-label{padding-left:8px}.masthead{margin:21px 0 15px;align-items:flex-start;flex-direction:column;gap:14px}.switcher{width:100%;padding:4px}.switcher button{flex:1;min-height:44px;font-size:15px;padding:7px}.board{grid-template-columns:1fr;min-height:0;border-radius:21px}.art-panel{height:clamp(145px,23dvh,215px);border-right:0;border-bottom:1px solid var(--line)}#robot-picture{height:94%;width:90%}.play-panel{padding:24px 21px 26px}.answer-picture{width:auto;height:85%;max-width:85%;border-radius:12px}.kicker{margin-bottom:9px}.actions{margin-top:20px}.board.editing .art-panel{display:none}.sub{margin-top:9px}.lesson-note{margin:13px 0 20px}.answer-picture{background:white}}
 @media(max-width:410px){.home-label{display:none}.utility{gap:1px}.quiet{font-size:14px}.actions{gap:7px}.primary,.secondary{padding:10px 13px;min-height:48px}.switcher button{gap:5px}}
 @media(prefers-reduced-motion:reduce){.art-panel.speaking #robot-picture{animation:none}}
+.sr-only,
+.stage-view .board[data-scene="intro"] #screen h2,
+.stage-view .board[data-scene="hint"]:not(.show-caption) #hint-caption {
+  position:absolute;inline-size:1px;block-size:1px;overflow:hidden;
+  clip-path:inset(50%);white-space:nowrap;padding:0;margin:-1px;border:0;
+}
+.stage-expand {display:none}
+#voice-dialog {width:min(435px,94vw)}
+.voice-options {display:grid;gap:8px;padding:0;border:0;margin:18px 0}
+.voice-choice {display:flex;align-items:center;gap:12px;padding:12px 15px;min-height:49px;border:1px solid var(--line);border-radius:12px;cursor:pointer;font-weight:700}
+.voice-choice:has(:checked) {border-color:var(--green);background:#edf4e9}
+.voice-choice input {width:19px;height:19px;accent-color:var(--green)}
+.voice-actions {display:flex;gap:10px;flex-wrap:wrap}
+#voice-status:not(:empty) {margin:13px 0 0;color:var(--muted);font-size:15px}
+
+/* Give the artwork a definite viewport-sized track. Captions and controls
+   occupy their own row and can never cover the picture. */
+@media screen {
+  .stage-view {height:100vh;height:100dvh;display:grid;grid-template-rows:auto minmax(0,1fr)}
+  .stage-view main {min-height:0;display:grid;grid-template-rows:auto minmax(0,1fr);padding-bottom:max(9px,env(safe-area-inset-bottom))}
+  .stage-view .top-inner {min-height:48px}
+  .stage-view .masthead {margin:8px 0 10px}
+  .stage-view .masthead h1 {font-size:clamp(23px,2.5vw,35px)}
+  .stage-view .switcher {padding:3px;border-radius:14px}
+  .stage-view .switcher button {min-height:42px;padding:6px 13px}
+  .stage-view .board {
+    display:grid;grid-template-columns:minmax(0,1fr);grid-template-rows:minmax(100px,1fr) auto;
+    min-width:0;min-height:0;max-width:100%;border-radius:22px;overflow:visible;
+    background:radial-gradient(ellipse at 50% 42%,#f9fcf0 0,#e4efdf 62%,#d2e3d3 100%);
+  }
+  .stage-view .art-panel {display:block;min-width:0;min-height:0;height:auto;overflow:visible;border:0;background:transparent}
+  .stage-view .art-panel::before,.stage-view .art-panel::after,.stage-view .orbit {display:none}
+  .stage-view .picture-stage {position:absolute;inset:clamp(7px,1vh,15px) 10px 4px;width:auto;height:auto;min-width:0;min-height:0}
+  .stage-view #robot-picture,.stage-view .answer-picture {
+    position:absolute;inset:0;width:100%;height:100%;min-width:0;min-height:0;
+    max-width:100%;max-height:100%;aspect-ratio:auto;object-fit:contain;object-position:50% 50%;
+    border-radius:0;box-shadow:none;background:transparent;
+  }
+  .stage-view #robot-picture {filter:drop-shadow(0 5px 4px #23483b17)}
+  #robot-picture[hidden] {display:none!important}
+  .stage-view .stage-expand {
+    display:flex;position:absolute;z-index:2;top:10px;right:10px;min-height:42px;
+    background:#fffffff2;border:1px solid #c8d6c9;font-size:14px;
+  }
+  .stage-view .play-panel {padding:3px clamp(8px,3vw,28px) max(10px,1.4vh);text-align:center;min-height:0}
+  .stage-view #screen {min-width:0}
+  .stage-view .kicker {justify-content:center;font-size:14px;color:#4c695d;gap:7px;margin:0 0 4px}
+  .stage-view .kicker .marker {display:none}
+  .stage-view .actions {margin:5px 0 0;justify-content:center;gap:8px}
+  .stage-view .actions button {min-height:46px;padding:9px 19px;font-size:clamp(15px,1.28vw,19px)}
+  .stage-view .actions .stage-expand {position:static;min-height:44px;box-shadow:none}
+  .stage-view .action-caption {border:0;background:transparent;text-decoration:underline;text-underline-offset:4px}
+  .stage-view .action-caption:disabled {opacity:.8}
+  .stage-view #screen .hint-title {font-size:clamp(20px,2.4vw,36px);line-height:1.45;max-width:38em;margin-inline:auto}
+  .stage-view #screen .previous {margin:2px 0 0;padding:0;border:0;font-size:clamp(14px,1.25vw,18px)}
+  .stage-view .board:not(.show-caption) #screen .previous {display:none}
+  .stage-view #lesson-note {display:none}
+  .stage-view .audio-status:not(:empty) {margin:4px 0 0}
+  .stage-view .board[data-scene="answer"] {background:#fff}
+  .stage-view .board[data-scene="answer"] .picture-stage {inset:clamp(12px,2vh,25px) clamp(18px,5vw,65px) 6px}
+  .stage-view .board[data-scene="answer"] .play-panel {border-top:1px solid #e7ebe4}
+  .stage-view .board[data-scene="answer"] #screen h2 {font-size:clamp(29px,3.6vw,48px);line-height:1.15}
+  .stage-view .board[data-scene="answer"] .sub {display:none}
+  .stage-view .board[data-scene="answer"] .kicker {margin-top:3px}
+  .stage-view.projecting {position:fixed;inset:0;z-index:10;height:100%;height:100dvh;grid-template-rows:minmax(0,1fr);background:var(--warm)}
+  .projecting .topbar,.projecting .masthead {display:none}
+  .stage-view.projecting main {width:100%;grid-template-rows:minmax(0,1fr);padding:0}
+  .projecting .board {border:0;border-radius:0}
+  .projecting .play-panel {padding-bottom:max(6px,env(safe-area-inset-bottom))}
+  .projecting.controls-idle .stage-expand,.projecting.controls-idle .actions,.projecting.controls-idle .kicker {opacity:0;pointer-events:none}
+  .projecting.controls-idle .stage-expand:focus-visible,.projecting.controls-idle .actions:has(:focus-visible) {opacity:1;pointer-events:auto}
+  .projecting.controls-idle .board[data-scene="intro"] .play-panel,
+  .projecting.controls-idle .board[data-scene="hint"]:not(.show-caption) .play-panel {position:absolute;bottom:0;left:0;right:0;z-index:-1;opacity:0;pointer-events:none}
+  .stage-view.projecting .board {position:relative}
+  @media(max-width:740px) {
+    .stage-view .masthead {display:grid;grid-template-columns:minmax(0,1fr);gap:5px;margin:4px 0 6px}
+    .stage-view .masthead h1 {font-size:22px}
+    .stage-view main {width:calc(100% - 16px)}
+    .stage-view .stage-expand {top:6px;right:6px}
+    .stage-view .picture-stage {inset:7px 3px 2px}
+    .stage-view .actions button {padding:8px 11px}
+    .stage-view .board {border-radius:16px}
+    .stage-view.projecting main {width:100%}
+    .projecting .masthead {display:none}
+  }
+  @media(max-width:520px) {
+    .top-inner {gap:4px}
+    .home-label {display:none}
+    .utility {gap:1px}
+    .quiet {gap:4px;padding:6px;font-size:14px}
+    .utility .icon {width:17px;height:17px}
+    .wordmark {font-size:17px}
+    .stage-view .top-inner {min-height:44px}
+  }
+  @media(max-height:520px) and (orientation:landscape) {
+    .stage-view .top-inner {min-height:38px}
+    .stage-view .quiet,.stage-view .switcher button {min-height:34px}
+    .stage-view .masthead {display:flex;align-items:center;margin:3px 0;gap:6px}
+    .stage-view .masthead h1 {font-size:21px}
+    .stage-view .switcher {width:auto}
+    .stage-view .actions button {min-height:39px;padding-block:5px}
+    .stage-view .kicker {display:none}
+    .stage-view .play-panel {padding-block:2px 5px}
+    .stage-view #screen .hint-title {font-size:20px}
+    .stage-view.projecting .masthead {display:none}
+  }
+}
+
+@media screen and (min-width:720px) and (max-height:520px) and (orientation:landscape) {
+  .stage-view:not(.projecting) .board:is([data-scene="intro"],[data-scene="answer"],[data-scene="hint"]:not(.show-caption)) {
+    grid-template-columns:minmax(0,1fr) minmax(0,2fr) minmax(160px,1fr);grid-template-rows:minmax(0,1fr);
+  }
+  .stage-view:not(.projecting) .board:is([data-scene="intro"],[data-scene="answer"],[data-scene="hint"]:not(.show-caption)) .art-panel {
+    grid-column:2;grid-row:1;
+  }
+  .stage-view:not(.projecting) .board:is([data-scene="intro"],[data-scene="answer"],[data-scene="hint"]:not(.show-caption)) .play-panel {
+    grid-column:3;grid-row:1;align-self:center;padding:4px 8px;border:0;
+  }
+}
+
 @page{size:A4 portrait;margin:10mm}
 @media print{
   body{background:white}
