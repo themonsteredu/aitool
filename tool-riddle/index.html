@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#f8f8f3">
+  <title>생활 도구 수수께끼 · MOAKIT</title>
+  <base href="/tool-riddle/">
+  <link rel="icon" href="./assets/quiz-robot.webp">
+  <link rel="preload" as="image" href="./assets/quiz-robot.webp">
+  <link rel="stylesheet" href="./style.css">
+  <script defer src="./app.js"></script>
+</head>
+<body>
+  <svg class="symbols" aria-hidden="true" xmlns="http://www.w3.org/2000/svg">
+    <symbol id="i-sound" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM16 8c2 2 2 6 0 8m3-11c4 4 4 10 0 14"/></symbol>
+    <symbol id="i-muted" viewBox="0 0 24 24"><path d="M4 9h4l5-4v14l-5-4H4zM17 9l5 6m0-6-5 6"/></symbol>
+    <symbol id="i-cards" viewBox="0 0 24 24"><rect x="7" y="3" width="13" height="17" rx="3"/><path d="m4 7-1 12a2 2 0 0 0 2 2l9 1m-3-14h5m-5 4h4"/></symbol>
+    <symbol id="i-robot" viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="4"/><path d="M12 3v4m-5 5h1m8 0h1m-7 4c1 1 3 1 4 0"/></symbol>
+    <symbol id="i-pencil" viewBox="0 0 24 24"><path d="m14.8 4.2 5 5M4 20l4.6-1.1L20 7.5a2.8 2.8 0 0 0-4-4L4.9 15z"/></symbol>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 5-7 7 7 7"/></symbol>
+  </svg>
+  <header class="topbar">
+    <div class="shell top-inner">
+      <a class="home" href="../"><span class="wordmark">MOAKIT</span><span class="home-label">수업 도구</span></a>
+      <div class="utility">
+        <button id="open-cards" type="button" class="quiet" disabled><svg class="icon" aria-hidden="true"><use href="#i-cards"/></svg>그림 카드</button>
+        <button id="toggle-sound" type="button" class="quiet" aria-pressed="true"><svg class="icon" aria-hidden="true"><use id="sound-icon" href="#i-sound"/></svg><span id="sound-label">소리 켜짐</span></button>
+      </div>
+    </div>
+  </header>
+  <main class="shell">
+    <div class="masthead">
+      <h1>생활 도구 수수께끼</h1>
+      <nav class="switcher" aria-label="출제자 선택">
+        <button id="robot-mode" type="button" aria-pressed="true"><svg class="icon" aria-hidden="true"><use href="#i-robot"/></svg>로봇이 문제 내기</button>
+        <button id="student-mode" type="button" aria-pressed="false"><svg class="icon" aria-hidden="true"><use href="#i-pencil"/></svg>우리가 문제 내기</button>
+      </nav>
+    </div>
+    <section id="board" class="board" aria-label="수수께끼 놀이">
+      <div id="art-panel" class="art-panel">
+        <div class="orbit" aria-hidden="true"></div>
+        <div class="picture-stage" id="picture-stage">
+          <img id="robot-picture" src="./assets/quiz-robot.webp" width="830" height="830" alt="노란 물음표 카드를 든 힌트 로봇" fetchpriority="high">
+        </div>
+      </div>
+      <div class="play-panel">
+        <div id="screen" aria-busy="true"><p>문제 카드를 준비하고 있어요.</p></div>
+        <p id="audio-status" class="audio-status" role="status"></p>
+      </div>
+    </section>
+    <p class="lesson-note" id="lesson-note"></p>
+    <noscript>수수께끼를 시작하려면 브라우저에서 자바스크립트를 켜 주세요.</noscript>
+  </main>
+  <dialog id="card-dialog" aria-labelledby="card-title">
+    <div class="dialog-head"><h2 id="card-title">우리 반 그림 카드</h2><button type="button" id="close-cards" class="quiet">닫기</button></div>
+    <p>책상에 펼칠 카드를 골라요. 로봇은 고른 도구로만 문제를 내요.</p>
+    <div class="card-grid" id="card-grid"></div>
+    <div class="dialog-foot">
+      <span id="card-count" aria-live="polite"></span>
+      <button type="button" id="print-cards" class="secondary">카드 인쇄</button>
+      <button type="button" id="apply-cards" class="primary">선택 적용</button>
+    </div>
+  </dialog>
+  <div id="print-sheet" aria-hidden="true"></div>
+</body>
+</html>
